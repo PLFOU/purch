@@ -11,10 +11,13 @@ def load_data():
     """Charge la liste de courses depuis le fichier JSON. Si le fichier n'existe pas, en crée un vide."""
     if not os.path.exists(DB_FILE):
         return {"items": []}
-    # Utilisation d'un bloc try/except pour gérer les fichiers JSON vides ou corrompus
     try:
         with open(DB_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            # Gère le cas où le fichier est vide
+            content = f.read()
+            if not content:
+                return {"items": []}
+            return json.loads(content)
     except (json.JSONDecodeError, FileNotFoundError):
         return {"items": []}
 
@@ -28,35 +31,45 @@ def save_data(data):
 
 st.set_page_config(page_title="Liste de Courses", page_icon="🛒", layout="centered")
 
-# Titre de l'application
 st.title("🛒 Liste de Courses Partagée")
 
 # Chargement des données
 shopping_data = load_data()
 shopping_list = shopping_data.get("items", [])
 
-# Section pour ajouter un nouvel item
+# --- SECTION D'AJOUT MODIFIÉE AVEC UN FORMULAIRE ---
 st.header("Ajouter un article", divider="rainbow")
-new_item_name = st.text_input(
-    "Nom de l'article :", 
-    label_visibility="collapsed", 
-    placeholder="Nom de l'article",
-    autofocus=True  # <--- MODIFICATION ICI
-)
 
-if st.button("➕ Ajouter", use_container_width=True, type="primary"):
-    if new_item_name and not any(item['name'].lower() == new_item_name.lower() for item in shopping_list):
-        # Ajoute le nouvel item avec l'état "à acheter" (checked=False)
-        shopping_list.append({"name": new_item_name, "checked": False})
-        save_data({"items": shopping_list})
-        st.success(f"'{new_item_name}' a été ajouté à la liste !")
-        st.rerun() # Recharge la page pour voir le nouvel item immédiatement
-    elif not new_item_name:
-        st.warning("Veuillez entrer un nom d'article.")
-    else:
-        st.warning(f"'{new_item_name}' est déjà dans la liste.")
+# Utilisation d'un formulaire qui se nettoie après soumission
+with st.form(key="add_item_form", clear_on_submit=True):
+    new_item_name = st.text_input(
+        "Article",  # Le label est nécessaire pour le formulaire
+        label_visibility="collapsed",
+        placeholder="Nom de l'article",
+        autofocus=True # Garde le focus sur le champ après le rechargement
+    )
+    
+    # Le bouton de soumission du formulaire
+    submitted = st.form_submit_button(
+        "➕ Ajouter", 
+        use_container_width=True, 
+        type="primary"
+    )
 
-# On place un séparateur visuel
+    # La logique est exécutée seulement quand le formulaire est soumis
+    if submitted:
+        if new_item_name and not any(item['name'].lower() == new_item_name.lower() for item in shopping_list):
+            shopping_list.append({"name": new_item_name, "checked": False})
+            save_data({"items": shopping_list})
+            st.success(f"'{new_item_name}' a été ajouté !")
+            # On force un rechargement pour que la liste s'actualise immédiatement
+            st.rerun()
+        elif not new_item_name:
+            st.warning("Veuillez entrer un nom d'article.")
+        else:
+            st.warning(f"'{new_item_name}' est déjà dans la liste.")
+
+
 st.divider()
 
 # On vérifie s'il y a des articles avant d'afficher les boutons d'action
