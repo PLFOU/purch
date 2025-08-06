@@ -62,7 +62,6 @@ with st.form(key="add_item_form", clear_on_submit=True):
             shopping_list.append({"name": new_item_name, "checked": False})
             save_data({"items": shopping_list})
             st.success(f"'{new_item_name}' a été ajouté !")
-            # On force un rechargement pour que la liste s'actualise immédiatement
             st.rerun()
         elif not new_item_name:
             st.warning("Veuillez entrer un nom d'article.")
@@ -90,14 +89,27 @@ if shopping_list:
             st.rerun()
 
 
-# Affichage de la liste de courses
+# --- SECTION D'AFFICHAGE AMÉLIORÉE ---
 st.header("À Acheter", divider="rainbow")
 
 if not shopping_list:
     st.info("La liste de courses est vide ! 🎉")
 else:
+    # --- AMÉLIORATION 1 : Trier la liste ---
+    # Trie par statut (non coché d'abord), puis par ordre alphabétique.
+    # 'False' (non coché) est évalué avant 'True' (coché) dans le tri.
+    shopping_list.sort(key=lambda item: (item['checked'], item['name'].lower()))
+    
+    # On sauvegarde la liste triée pour que l'ordre persiste
+    save_data({"items": shopping_list})
+
     for item in shopping_list[:]:
-        is_checked = st.checkbox(item['name'], value=item['checked'], key=f"check_{item['name']}")
+        
+        # --- AMÉLIORATION 2 : Barrer le texte si l'article est coché ---
+        # On utilise la syntaxe Markdown "~~texte~~" pour barrer le texte.
+        label = f"~~{item['name']}~~" if item['checked'] else item['name']
+        
+        is_checked = st.checkbox(label, value=item['checked'], key=f"check_{item['name']}")
         
         if is_checked != item['checked']:
             item['checked'] = is_checked
