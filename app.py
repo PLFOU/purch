@@ -36,33 +36,32 @@ st.title("🛒 Liste de Courses Partagée")
 shopping_data = load_data()
 shopping_list = shopping_data.get("items", [])
 
+# --- Initialisation de sécurité pour le session_state ---
+# On s'assure que la clé existe avant de l'utiliser.
+if "new_item_input" not in st.session_state:
+    st.session_state.new_item_input = ""
 
-# --- SECTION D'AJOUT REFACTORISÉE (SANS FORMULAIRE) ---
+
+# --- SECTION D'AJOUT ---
 st.header("Ajouter un article", divider="rainbow")
 
-# On utilise une clé pour lier le champ de texte à l'état de la session
 st.text_input(
     "Article",
     label_visibility="collapsed",
     placeholder="Nom de l'article",
     autofocus=True,
-    key="new_item_input"  # Clé pour accéder à la valeur dans st.session_state
+    key="new_item_input"
 )
 
-# On utilise un bouton simple
 if st.button("➕ Ajouter", use_container_width=True, type="primary"):
-    # On récupère la valeur via st.session_state
     new_item_name = st.session_state.new_item_input
     
     if new_item_name and not any(item['name'].lower() == new_item_name.lower() for item in shopping_list):
         shopping_list.append({"name": new_item_name, "checked": False})
         save_data({"items": shopping_list})
         st.success(f"'{new_item_name}' a été ajouté !")
-        
-        # On vide manuellement le champ de texte en modifiant l'état de la session
         st.session_state.new_item_input = ""
         st.rerun()
-        
     elif not new_item_name:
         st.warning("Veuillez entrer un nom d'article.")
     else:
@@ -89,7 +88,7 @@ if shopping_list:
             st.rerun()
 
 
-# --- Section d'affichage (inchangée) ---
+# --- Section d'affichage ---
 st.header("À Acheter", divider="rainbow")
 
 if not shopping_list:
