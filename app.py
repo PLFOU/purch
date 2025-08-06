@@ -36,8 +36,7 @@ st.title("🛒 Liste de Courses Partagée")
 shopping_data = load_data()
 shopping_list = shopping_data.get("items", [])
 
-# --- Initialisation de sécurité pour le session_state ---
-# On s'assure que la clé existe avant de l'utiliser.
+# On s'assure que la clé existe dans l'état de la session avant de l'utiliser.
 if "new_item_input" not in st.session_state:
     st.session_state.new_item_input = ""
 
