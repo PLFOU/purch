@@ -37,7 +37,12 @@ shopping_list = shopping_data.get("items", [])
 
 # Section pour ajouter un nouvel item
 st.header("Ajouter un article", divider="rainbow")
-new_item_name = st.text_input("Nom de l'article :", label_visibility="collapsed", placeholder="Nom de l'article")
+new_item_name = st.text_input(
+    "Nom de l'article :", 
+    label_visibility="collapsed", 
+    placeholder="Nom de l'article",
+    autofocus=True  # <--- MODIFICATION ICI
+)
 
 if st.button("➕ Ajouter", use_container_width=True, type="primary"):
     if new_item_name and not any(item['name'].lower() == new_item_name.lower() for item in shopping_list):
@@ -51,7 +56,9 @@ if st.button("➕ Ajouter", use_container_width=True, type="primary"):
     else:
         st.warning(f"'{new_item_name}' est déjà dans la liste.")
 
-# --- NOUVEL EMPLACEMENT DES BOUTONS D'ACTION ---
+# On place un séparateur visuel
+st.divider()
+
 # On vérifie s'il y a des articles avant d'afficher les boutons d'action
 if shopping_list:
     col1, col2 = st.columns(2)
@@ -76,12 +83,9 @@ st.header("À Acheter", divider="rainbow")
 if not shopping_list:
     st.info("La liste de courses est vide ! 🎉")
 else:
-    # On parcourt une copie de la liste pour pouvoir la modifier en toute sécurité
     for item in shopping_list[:]:
-        # La clé 'key' unique est essentielle pour que Streamlit gère l'état de chaque checkbox
         is_checked = st.checkbox(item['name'], value=item['checked'], key=f"check_{item['name']}")
         
-        # Si l'état de la checkbox a changé, on met à jour nos données
         if is_checked != item['checked']:
             item['checked'] = is_checked
             save_data({"items": shopping_list})
