@@ -13,7 +13,6 @@ def load_data():
         return {"items": []}
     try:
         with open(DB_FILE, "r", encoding="utf-8") as f:
-            # Gère le cas où le fichier est vide
             content = f.read()
             if not content:
                 return {"items": []}
@@ -37,26 +36,23 @@ st.title("🛒 Liste de Courses Partagée")
 shopping_data = load_data()
 shopping_list = shopping_data.get("items", [])
 
-# --- SECTION D'AJOUT MODIFIÉE AVEC UN FORMULAIRE ---
+# --- SECTION D'AJOUT AVEC UN FORMULAIRE ---
 st.header("Ajouter un article", divider="rainbow")
 
-# Utilisation d'un formulaire qui se nettoie après soumission
 with st.form(key="add_item_form", clear_on_submit=True):
     new_item_name = st.text_input(
-        "Article",  # Le label est nécessaire pour le formulaire
+        "Article",
         label_visibility="collapsed",
         placeholder="Nom de l'article",
-        autofocus=True # Garde le focus sur le champ après le rechargement
+        autofocus=True
     )
     
-    # Le bouton de soumission du formulaire
     submitted = st.form_submit_button(
         "➕ Ajouter", 
         use_container_width=True, 
         type="primary"
     )
 
-    # La logique est exécutée seulement quand le formulaire est soumis
     if submitted:
         if new_item_name and not any(item['name'].lower() == new_item_name.lower() for item in shopping_list):
             shopping_list.append({"name": new_item_name, "checked": False})
@@ -71,7 +67,7 @@ with st.form(key="add_item_form", clear_on_submit=True):
 
 st.divider()
 
-# On vérifie s'il y a des articles avant d'afficher les boutons d'action
+# Boutons d'action
 if shopping_list:
     col1, col2 = st.columns(2)
     with col1:
@@ -89,29 +85,25 @@ if shopping_list:
             st.rerun()
 
 
-# --- SECTION D'AFFICHAGE AMÉLIORÉE ---
+# --- SECTION D'AFFICHAGE CORRIGÉE ---
 st.header("À Acheter", divider="rainbow")
 
 if not shopping_list:
     st.info("La liste de courses est vide ! 🎉")
 else:
-    # --- AMÉLIORATION 1 : Trier la liste ---
-    # Trie par statut (non coché d'abord), puis par ordre alphabétique.
-    # 'False' (non coché) est évalué avant 'True' (coché) dans le tri.
+    # On trie la liste pour l'affichage (non cochés en premier, puis par ordre alpha)
     shopping_list.sort(key=lambda item: (item['checked'], item['name'].lower()))
     
-    # On sauvegarde la liste triée pour que l'ordre persiste
-    save_data({"items": shopping_list})
+    # LA LIGNE SUIVANTE A ÉTÉ SUPPRIMÉE CAR ELLE CAUSAIT L'ERREUR
+    # save_data({"items": shopping_list}) 
 
     for item in shopping_list[:]:
-        
-        # --- AMÉLIORATION 2 : Barrer le texte si l'article est coché ---
-        # On utilise la syntaxe Markdown "~~texte~~" pour barrer le texte.
         label = f"~~{item['name']}~~" if item['checked'] else item['name']
         
         is_checked = st.checkbox(label, value=item['checked'], key=f"check_{item['name']}")
         
+        # L'ordre (y compris le tri) est sauvegardé uniquement si un changement a lieu.
         if is_checked != item['checked']:
             item['checked'] = is_checked
-            save_data({"items": shopping_list})
+            save_data({"items": shopping_list}) # Ce save_data est au bon endroit.
             st.rerun()
