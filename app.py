@@ -11,8 +11,13 @@ def load_data():
     """Charge la liste de courses depuis le fichier JSON. Si le fichier n'existe pas, en crée un vide."""
     if not os.path.exists(DB_FILE):
         return {"items": []}
-    with open(DB_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    # Utilisation d'un bloc try/except pour gérer les fichiers JSON vides ou corrompus
+    try:
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return {"items": []}
+
 
 def save_data(data):
     """Sauvegarde la liste de courses dans le fichier JSON."""
@@ -32,7 +37,7 @@ shopping_list = shopping_data.get("items", [])
 
 # Section pour ajouter un nouvel item
 st.header("Ajouter un article", divider="rainbow")
-new_item_name = st.text_input("Nom de l'article :")
+new_item_name = st.text_input("Nom de l'article :", label_visibility="collapsed", placeholder="Nom de l'article")
 
 if st.button("➕ Ajouter", use_container_width=True, type="primary"):
     if new_item_name and not any(item['name'].lower() == new_item_name.lower() for item in shopping_list):
@@ -45,6 +50,27 @@ if st.button("➕ Ajouter", use_container_width=True, type="primary"):
         st.warning("Veuillez entrer un nom d'article.")
     else:
         st.warning(f"'{new_item_name}' est déjà dans la liste.")
+
+# On place un séparateur visuel
+st.divider()
+
+# --- NOUVEL EMPLACEMENT DES BOUTONS D'ACTION ---
+# On vérifie s'il y a des articles avant d'afficher les boutons d'action
+if shopping_list:
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🗑️ Supprimer les articles cochés", use_container_width=True):
+            items_to_keep = [item for item in shopping_list if not item['checked']]
+            if len(items_to_keep) < len(shopping_list):
+                save_data({"items": items_to_keep})
+                st.rerun()
+            else:
+                st.toast("Aucun article n'était coché.")
+
+    with col2:
+        if st.button("🔄 Réinitialiser la liste", use_container_width=True, type="secondary"):
+            save_data({"items": []})
+            st.rerun()
 
 
 # Affichage de la liste de courses
@@ -63,23 +89,3 @@ else:
             item['checked'] = is_checked
             save_data({"items": shopping_list})
             st.rerun()
-
-# Section pour les actions sur la liste
-st.header("Actions", divider="rainbow")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    if st.button("🗑️ Supprimer les articles cochés", use_container_width=True):
-        # On garde uniquement les items qui ne sont pas cochés
-        items_to_keep = [item for item in shopping_list if not item['checked']]
-        if len(items_to_keep) < len(shopping_list):
-            save_data({"items": items_to_keep})
-            st.rerun()
-        else:
-            st.toast("Aucun article n'était coché.")
-
-with col2:
-    if st.button("🔄 Réinitialiser la liste", use_container_width=True):
-        save_data({"items": []}) # On sauvegarde une liste vide
-        st.rerun()
