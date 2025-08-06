@@ -36,33 +36,37 @@ st.title("🛒 Liste de Courses Partagée")
 shopping_data = load_data()
 shopping_list = shopping_data.get("items", [])
 
-# --- SECTION D'AJOUT AVEC UN FORMULAIRE ---
+
+# --- SECTION D'AJOUT REFACTORISÉE (SANS FORMULAIRE) ---
 st.header("Ajouter un article", divider="rainbow")
 
-with st.form(key="add_item_form", clear_on_submit=True):
-    new_item_name = st.text_input(
-        "Article",
-        label_visibility="collapsed",
-        placeholder="Nom de l'article",
-        autofocus=True
-    )
-    
-    submitted = st.form_submit_button(
-        "➕ Ajouter", 
-        use_container_width=True, 
-        type="primary"
-    )
+# On utilise une clé pour lier le champ de texte à l'état de la session
+st.text_input(
+    "Article",
+    label_visibility="collapsed",
+    placeholder="Nom de l'article",
+    autofocus=True,
+    key="new_item_input"  # Clé pour accéder à la valeur dans st.session_state
+)
 
-    if submitted:
-        if new_item_name and not any(item['name'].lower() == new_item_name.lower() for item in shopping_list):
-            shopping_list.append({"name": new_item_name, "checked": False})
-            save_data({"items": shopping_list})
-            st.success(f"'{new_item_name}' a été ajouté !")
-            st.rerun()
-        elif not new_item_name:
-            st.warning("Veuillez entrer un nom d'article.")
-        else:
-            st.warning(f"'{new_item_name}' est déjà dans la liste.")
+# On utilise un bouton simple
+if st.button("➕ Ajouter", use_container_width=True, type="primary"):
+    # On récupère la valeur via st.session_state
+    new_item_name = st.session_state.new_item_input
+    
+    if new_item_name and not any(item['name'].lower() == new_item_name.lower() for item in shopping_list):
+        shopping_list.append({"name": new_item_name, "checked": False})
+        save_data({"items": shopping_list})
+        st.success(f"'{new_item_name}' a été ajouté !")
+        
+        # On vide manuellement le champ de texte en modifiant l'état de la session
+        st.session_state.new_item_input = ""
+        st.rerun()
+        
+    elif not new_item_name:
+        st.warning("Veuillez entrer un nom d'article.")
+    else:
+        st.warning(f"'{new_item_name}' est déjà dans la liste.")
 
 
 st.divider()
@@ -85,25 +89,20 @@ if shopping_list:
             st.rerun()
 
 
-# --- SECTION D'AFFICHAGE CORRIGÉE ---
+# --- Section d'affichage (inchangée) ---
 st.header("À Acheter", divider="rainbow")
 
 if not shopping_list:
     st.info("La liste de courses est vide ! 🎉")
 else:
-    # On trie la liste pour l'affichage (non cochés en premier, puis par ordre alpha)
     shopping_list.sort(key=lambda item: (item['checked'], item['name'].lower()))
-    
-    # LA LIGNE SUIVANTE A ÉTÉ SUPPRIMÉE CAR ELLE CAUSAIT L'ERREUR
-    # save_data({"items": shopping_list}) 
 
     for item in shopping_list[:]:
         label = f"~~{item['name']}~~" if item['checked'] else item['name']
         
         is_checked = st.checkbox(label, value=item['checked'], key=f"check_{item['name']}")
         
-        # L'ordre (y compris le tri) est sauvegardé uniquement si un changement a lieu.
         if is_checked != item['checked']:
             item['checked'] = is_checked
-            save_data({"items": shopping_list}) # Ce save_data est au bon endroit.
+            save_data({"items": shopping_list})
             st.rerun()
