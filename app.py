@@ -51,9 +51,6 @@ if st.button("➕ Ajouter", use_container_width=True, type="primary"):
     else:
         st.warning(f"'{new_item_name}' est déjà dans la liste.")
 
-# On place un séparateur visuel
-st.divider()
-
 # --- NOUVEL EMPLACEMENT DES BOUTONS D'ACTION ---
 # On vérifie s'il y a des articles avant d'afficher les boutons d'action
 if shopping_list:
